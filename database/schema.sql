@@ -1,0 +1,11 @@
+CREATE TABLE users ( 
+id INTEGER PRIMARY KEY, 
+username TEXT NOT NULL UNIQUE, 
+email TEXT NOT NULL UNIQUE, 
+password_hash TEXT NOT NULL, 
+first_name TEXT, 
+last_name TEXT, 
+avatar_url TEXT, 
+is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN(0, 1)), 
+created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
