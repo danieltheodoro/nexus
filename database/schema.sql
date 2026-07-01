@@ -124,6 +124,27 @@ CREATE TABLE task_labels (
 		ON DELETE CASCADE
 );
 
+CREATE TABLE comments (
+	id INTEGER PRIMARY KEY,
+
+	task_id INTEGER NOT NULL,
+	author_id INTEGER NOT NULL,
+
+	content TEXT NOT NULL
+		CHECK(length(trim(content)) > 0),
+
+	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+	FOREIGN KEY (task_id)
+		REFERENCES tasks(id)
+		ON DELETE CASCADE,
+
+	FOREIGN KEY (author_id)
+		REFERENCES users(id)
+		ON DELETE CASCADE
+);
+
 CREATE INDEX idx_projects_user_id 
 ON projects(user_id);
 
@@ -140,3 +161,8 @@ ON labels(project_id);
 
 CREATE INDEX idx_task_labels_label_id
 ON task_labels(label_id);
+
+CREATE INDEX idx_comments_task_id
+ON comments(task_id);
+CREATE INDEX idx_comments_author_id
+ON comments(author_id);
