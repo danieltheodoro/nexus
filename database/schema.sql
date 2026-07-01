@@ -3,9 +3,12 @@ PRAGMA foreign_keys = ON;
 CREATE TABLE users (
 	id INTEGER PRIMARY KEY,
 	
-	username TEXT NOT NULL UNIQUE,
-	email TEXT NOT NULL UNIQUE,
-	password_hash TEXT NOT NULL,
+	username TEXT NOT NULL UNIQUE
+		CHECK(length(trim(username)) > 0),
+	email TEXT NOT NULL UNIQUE
+		CHECK(email LIKE '%@%.%'),
+	password_hash TEXT NOT NULL 
+		CHECK(length(trim(password_hash)) > 0),
 	first_name TEXT,
 	last_name TEXT,
 	avatar_url TEXT, 
@@ -20,7 +23,8 @@ CREATE TABLE projects (
 	id INTEGER PRIMARY KEY,
 	user_id INTEGER NOT NULL,
 	
-	name TEXT NOT NULL,
+	name TEXT NOT NULL
+		CHECK(length(trim(name)) > 0),
 	description TEXT,
 	color TEXT,
 	
@@ -40,7 +44,9 @@ CREATE TABLE lists (
 	id INTEGER PRIMARY KEY,
 	project_id INTEGER NOT NULL,
 
-	name TEXT NOT NULL,
+	name TEXT NOT NULL
+		CHECK(length(trim(name)) > 0),
+	
 	position INTEGER NOT NULL,
 
 	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -54,8 +60,41 @@ CREATE TABLE lists (
 	UNIQUE (project_id, position)
 );
 
+CREATE TABLE tasks (
+	id INTEGER PRIMARY KEY,
+	list_id INTEGER NOT NULL,
+	creator_id INTEGER NOT NULL,
+
+	title TEXT NOT NULL 
+		CHECK(length(trim(title)) > 0),
+	description TEXT,
+
+	priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
+
+	position INTEGER NOT NULL,
+
+	due_date TEXT,
+	completed_at TEXT,
+
+	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+	FOREIGN KEY (list_id)
+		REFERENCES lists(id)
+		ON DELETE CASCADE,
+
+	FOREIGN KEY (creator_id)
+		REFERENCES users(id)
+		ON DELETE CASCADE,
+
+	UNIQUE (list_id, position)
+);
+
 CREATE INDEX idx_projects_user_id 
 ON projects(user_id);
 
 CREATE INDEX idx_lists_project_id
 ON lists(project_id);
+
+CREATE INDEX idx_tasks_list_id ON tasks(list_id);
+CREATE INDEX idx_tasks_creator_id ON tasks(creator_id);
