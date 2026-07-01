@@ -2,6 +2,7 @@ PRAGMA foreign_keys = ON;
 
 CREATE TABLE users (
 	id INTEGER PRIMARY KEY,
+	
 	username TEXT NOT NULL UNIQUE,
 	email TEXT NOT NULL UNIQUE,
 	password_hash TEXT NOT NULL,
@@ -35,4 +36,26 @@ CREATE TABLE projects (
 	UNIQUE (user_id, name)
 );
 
-CREATE INDEX idx_projects_user_id ON projects(user_id);
+CREATE TABLE lists (
+	id INTEGER PRIMARY KEY,
+	project_id INTEGER NOT NULL,
+
+	name TEXT NOT NULL,
+	position INTEGER NOT NULL,
+
+	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+	FOREIGN KEY (project_id)
+		REFERENCES projects(id)
+		ON DELETE CASCADE,
+
+	UNIQUE (project_id, name),
+	UNIQUE (project_id, position)
+);
+
+CREATE INDEX idx_projects_user_id 
+ON projects(user_id);
+
+CREATE INDEX idx_lists_project_id
+ON lists(project_id);
