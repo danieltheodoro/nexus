@@ -1,11 +1,38 @@
-CREATE TABLE users ( 
-id INTEGER PRIMARY KEY, 
-username TEXT NOT NULL UNIQUE, 
-email TEXT NOT NULL UNIQUE, 
-password_hash TEXT NOT NULL, 
-first_name TEXT, 
-last_name TEXT, 
-avatar_url TEXT, 
-is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN(0, 1)), 
-created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, 
-updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+PRAGMA foreign_keys = ON;
+
+CREATE TABLE users (
+	id INTEGER PRIMARY KEY,
+	username TEXT NOT NULL UNIQUE,
+	email TEXT NOT NULL UNIQUE,
+	password_hash TEXT NOT NULL,
+	first_name TEXT,
+	last_name TEXT,
+	avatar_url TEXT, 
+
+	is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)), 
+
+	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+	updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE projects (
+	id INTEGER PRIMARY KEY,
+	user_id INTEGER NOT NULL,
+	
+	name TEXT NOT NULL,
+	description TEXT,
+	color TEXT,
+	
+	is_archived INTEGER NOT NULL DEFAULT 0 CHECK (is_archived IN (0, 1)),
+
+	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+	FOREIGN KEY (user_id)
+		REFERENCES users(id)
+		ON DELETE CASCADE,
+
+	UNIQUE (user_id, name)
+);
+
+CREATE INDEX idx_projects_user_id ON projects(user_id);
