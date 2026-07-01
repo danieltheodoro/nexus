@@ -4,21 +4,34 @@ Task manager in development.
 
 ## Status
 
-Database Model:
+In development
 
+## Database Model
+
+```text
 users
 │
-└── projects
-    ├── lists
-    │   └── tasks
-    │        ▲
-    │        │
-    └── labels
-             ▲
-             │
-        task_labels
+├── projects
+│   ├── lists
+│   │   └── tasks
+│   │        ├── comments
+│   │        │
+│   │        └── task_labels
+│   │             ▲
+│   └── labels ───┘
+│
+└──────────────► comments
+```
 
-## Tecnologias
+## Tech Stack
 
-- SQlite
+- SQLite
 
+## Roadmap
+
+- [x] Database schema
+- [ ] Seed data
+- [ ] Backend
+- [ ] REST API
+- [ ] Authentication
+- [ ] Frontend
