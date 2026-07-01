@@ -6,6 +6,10 @@ type User struct {
 	Email     string `json:"email"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
+	AvatarURL string `json:"avatar_url"`
+	IsActive  bool   `json:"is_active"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 type Project struct {
@@ -14,6 +18,9 @@ type Project struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Color       string `json:"color"`
+	IsArchived  bool   `json:"is_archived"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
 }
 
 type List struct {
@@ -21,6 +28,8 @@ type List struct {
 	ProjectID int    `json:"project_id"`
 	Name      string `json:"name"`
 	Position  int    `json:"position"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 type Task struct {
@@ -31,6 +40,10 @@ type Task struct {
 	Description string `json:"description"`
 	Priority    string `json:"priority"`
 	Position    int    `json:"position"`
+	DueDate     string `json:"due_date"`
+	CompletedAt string `json:"completed_at"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
 }
 
 type Label struct {
@@ -38,11 +51,15 @@ type Label struct {
 	ProjectID int    `json:"project_id"`
 	Name      string `json:"name"`
 	Color     string `json:"color"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 type Comment struct {
-	ID       int    `json:"id"`
-	TaskID   int    `json:"task_id"`
-	AuthorID int    `json:"author_id"`
-	Content  string `json:"content"`
+	ID        int    `json:"id"`
+	TaskID    int    `json:"task_id"`
+	AuthorID  int    `json:"author_id"`
+	Content   string `json:"content"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
