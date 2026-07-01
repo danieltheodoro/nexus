@@ -90,11 +90,53 @@ CREATE TABLE tasks (
 	UNIQUE (list_id, position)
 );
 
+CREATE TABLE labels (
+	id INTEGER PRIMARY KEY,
+	project_id INTEGER NOT NULL,
+
+	name TEXT NOT NULL
+		CHECK(length(trim(name)) > 0),
+	color TEXT NOT NULL
+		CHECK(length(trim(color)) > 0),
+
+	created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+	FOREIGN KEY (project_id)
+		REFERENCES projects(id)
+		ON DELETE CASCADE,
+
+	UNIQUE (project_id, name)
+);
+
+CREATE TABLE task_labels (
+	task_id INTEGER NOT NULL,
+	label_id INTEGER NOT NULL,
+
+	PRIMARY KEY (task_id, label_id),
+
+	FOREIGN KEY (task_id)
+		REFERENCES tasks(id)
+		ON DELETE CASCADE,
+
+	FOREIGN KEY (label_id)
+		REFERENCES labels(id)
+		ON DELETE CASCADE
+);
+
 CREATE INDEX idx_projects_user_id 
 ON projects(user_id);
 
 CREATE INDEX idx_lists_project_id
 ON lists(project_id);
 
-CREATE INDEX idx_tasks_list_id ON tasks(list_id);
-CREATE INDEX idx_tasks_creator_id ON tasks(creator_id);
+CREATE INDEX idx_tasks_list_id
+ON tasks(list_id);
+CREATE INDEX idx_tasks_creator_id 
+ON tasks(creator_id);
+
+CREATE INDEX idx_labels_project_id
+ON labels(project_id);
+
+CREATE INDEX idx_task_labels_label_id
+ON task_labels(label_id);

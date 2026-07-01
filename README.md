@@ -4,7 +4,19 @@ Task manager in development.
 
 ## Status
 
-Work in progress.
+Database Model:
+
+users
+│
+└── projects
+    ├── lists
+    │   └── tasks
+    │        ▲
+    │        │
+    └── labels
+             ▲
+             │
+        task_labels
 
 ## Tecnologias
 
