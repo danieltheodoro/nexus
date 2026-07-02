@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"strconv"
 )
 
 func projects(w http.ResponseWriter, r *http.Request) {
@@ -39,16 +40,74 @@ func handleGetProjects(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func handleCreateProject(w http.ResponseWriter, _ *http.Request) {
-	http.Error(w, "Not Implemented", http.StatusNotImplemented)
+func handleCreateProject(w http.ResponseWriter, r *http.Request) {
+	var req CreateProjectRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	project := Project{
+		UserID:      req.UserID,
+		Name:        req.Name,
+		Description: req.Description,
+		Color:       req.Color,
+	}
+
+	if err := createProject(project); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 }
 
-func handleUpdateProject(w http.ResponseWriter, _ *http.Request) {
-	http.Error(w, "Not Implemented", http.StatusNotImplemented)
+func handleUpdateProject(w http.ResponseWriter, r *http.Request) {
+
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		http.Error(w, "Invalid id", http.StatusBadRequest)
+		return
+	}
+
+	var req UpdateProjectRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	project := Project{
+		Name:        req.Name,
+		Description: req.Description,
+		Color:       req.Color,
+		IsArchived:  req.IsArchived,
+	}
+
+	if err := updateProject(id, project); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+
 }
 
-func handleDeleteProject(w http.ResponseWriter, _ *http.Request) {
-	http.Error(w, "Not Implemented", http.StatusNotImplemented)
+func handleDeleteProject(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		http.Error(w, "Invalid id", http.StatusBadRequest)
+		return
+	}
+
+	if err := deleteProject(id); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+
 }
 
 func getProjects() ([]Project, error) {
@@ -100,4 +159,53 @@ func getProjects() ([]Project, error) {
 	}
 
 	return projects, nil
+}
+
+func createProject(project Project) error {
+	_, err := db.Exec(`
+		INSERT INTO projects(
+			user_id,
+			name,
+			description,
+			color
+		) VALUES (?, ?, ?, ?)
+	`,
+		project.UserID,
+		project.Name,
+		project.Description,
+		project.Color)
+
+	return err
+
+}
+
+func updateProject(id int, project Project) error {
+	_, err := db.Exec(`
+		UPDATE projects
+		SET
+			name = ?,
+			description = ?,
+			color = ?,
+			is_archived = ?,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?
+		`,
+		project.Name,
+		project.Description,
+		project.Color,
+		project.IsArchived,
+		id,
+	)
+
+	return err
+}
+
+func deleteProject(id int) error {
+	_, err := db.Exec(`
+						DELETE FROM projects
+						WHERE id = ?`,
+		id,
+	)
+	return err
+
 }

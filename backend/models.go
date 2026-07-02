@@ -23,18 +23,18 @@ type CreateUserRequest struct {
 }
 
 type UpdateUserRequest struct {
-	Username  string `json:"username"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
+	Username    string `json:"username"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
 	NewPassword string `json:"new_password"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	AvatarURL string `json:"avatar_url"`
-	IsActive  bool   `json:"is_active"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	AvatarURL   string `json:"avatar_url"`
+	IsActive    bool   `json:"is_active"`
 }
 
 type DeleteUserRequest struct {
-Password string `json:"password"`
+	Password string `json:"password"`
 }
 
 type Project struct {
@@ -46,6 +46,20 @@ type Project struct {
 	IsArchived  bool   `json:"is_archived"`
 	CreatedAt   string `json:"created_at"`
 	UpdatedAt   string `json:"updated_at"`
+}
+
+type CreateProjectRequest struct {
+	UserID      int    `json:"user_id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Color       string `json:"color"`
+}
+
+type UpdateProjectRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Color       string `json:"color"`
+	IsArchived  bool   `json:"is_archived"`
 }
 
 type List struct {
