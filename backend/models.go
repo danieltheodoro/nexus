@@ -71,6 +71,17 @@ type List struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
+type CreateListRequest struct {
+	ProjectID int    `json:"project_id"`
+	Name      string `json:"name"`
+	Position  int    `json:"position"`
+}
+
+type UpdateListRequest struct {
+	Name     string `json:"name"`
+	Position int    `json:"position"`
+}
+
 type Task struct {
 	ID          int    `json:"id"`
 	ListID      int    `json:"list_id"`
