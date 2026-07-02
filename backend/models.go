@@ -1,15 +1,35 @@
 package main
 
 type User struct {
-	ID        int    `json:"id"`
+	ID           int    `json:"id"`
+	Username     string `json:"username"`
+	Email        string `json:"email"`
+	PasswordHash string `json:"-"`
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
+	AvatarURL    string `json:"avatar_url"`
+	IsActive     bool   `json:"is_active"`
+	CreatedAt    string `json:"created_at"`
+	UpdatedAt    string `json:"updated_at"`
+}
+
+type CreateUserRequest struct {
 	Username  string `json:"username"`
 	Email     string `json:"email"`
+	Password  string `json:"password"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	AvatarURL string `json:"avatar_url"`
+}
+
+type UpdateUserRequest struct {
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	AvatarURL string `json:"avatar_url"`
 	IsActive  bool   `json:"is_active"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
 }
 
 type Project struct {
