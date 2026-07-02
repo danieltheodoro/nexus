@@ -124,3 +124,13 @@ type Comment struct {
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 }
+
+type CreateCommentRequest struct {
+	TaskID   int    `json:"task_id"`
+	AuthorID int    `json:"author_id"`
+	Content  string `json:"content"`
+}
+
+type UpdateCommentRequest struct {
+	Content string `json:"content"`
+}
