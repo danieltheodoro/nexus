@@ -154,3 +154,12 @@ type CreateCommentRequest struct {
 type UpdateCommentRequest struct {
 	Content string `json:"content"`
 }
+
+type LoginRequest struct {
+	Username  string `json:"username"`
+	Password string `json:"password"`
+}
+
+type LoginResponse struct {
+	Token string `json:"token"`
+}

@@ -34,6 +34,6 @@ users
 - [x] Seed data
 - [x] HTTP server
 - [x] Database initialization
-- [ ] REST API
+- [x] CRUD API
 - [ ] Authentication
 - [ ] Frontend

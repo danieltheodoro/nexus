@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"golang.org/x/crypto/bcrypt"
+	"os"
 )
 
 func nullString(s sql.NullString) string {
@@ -31,4 +32,14 @@ func checkPassword(password, hash string) bool {
 	)
 
 	return err == nil
+}
+
+func getJWTSecret() []byte {
+	secret := os.Getenv("JWT_SECRET")
+
+	if secret == "" {
+		return []byte("kore-wa-kimitsu-da")
+	}
+
+	return []byte(secret)
 }

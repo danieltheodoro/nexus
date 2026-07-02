@@ -224,6 +224,28 @@ func getUsers() ([]User, error) {
 	return users, nil
 }
 
+func getUserByUsername(username string) (User, error) {
+	var user User
+
+	err := db.QueryRow(`
+		SELECT
+		id,
+		username,
+		email,
+		password_hash
+		FROM users
+		WHERE username = ?
+		`,
+		username).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.PasswordHash,
+	)
+
+	return user, err
+}
+
 func createUser(user User) error {
 	_, err := db.Exec(`
 		INSERT INTO users (

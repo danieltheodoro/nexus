@@ -16,6 +16,7 @@ func main() {
 	defer db.Close()
 
 	http.HandleFunc("/health", health)
+	http.HandleFunc("/login", login)
 	http.HandleFunc("/users", users)
 	http.HandleFunc("/projects", projects)
 	http.HandleFunc("/lists", lists)
