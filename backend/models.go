@@ -96,6 +96,26 @@ type Task struct {
 	UpdatedAt   string `json:"updated_at"`
 }
 
+type CreateTaskRequest struct {
+	ListID      int    `json:"list_id"`
+	CreatorID   int    `json:"creator_id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Priority    string `json:"priority"`
+	Position    int    `json:"position"`
+	DueDate     string `json:"due_date"`
+	CompletedAt string `json:"completed_at"`
+}
+
+type UpdateTaskRequest struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Priority    string `json:"priority"`
+	Position    int    `json:"position"`
+	DueDate     string `json:"due_date"`
+	CompletedAt string `json:"completed_at"`
+}
+
 type Label struct {
 	ID        int    `json:"id"`
 	ProjectID int    `json:"project_id"`

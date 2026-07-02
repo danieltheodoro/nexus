@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"strconv"
 )
 
 func tasks(w http.ResponseWriter, r *http.Request) {
@@ -39,16 +40,75 @@ func handleGetTasks(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func handleCreateTask(w http.ResponseWriter, _ *http.Request) {
-	http.Error(w, "Not Implemented", http.StatusNotImplemented)
+func handleCreateTask(w http.ResponseWriter, r *http.Request) {
+	var req CreateTaskRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	task := Task{
+		ListID:      req.ListID,
+		CreatorID:   req.CreatorID,
+		Title:       req.Title,
+		Description: req.Description,
+		Priority:    req.Priority,
+		Position:    req.Position,
+		DueDate:     req.DueDate,
+		CompletedAt: req.CompletedAt,
+	}
+
+	if err := createTask(task); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 }
 
-func handleUpdateTask(w http.ResponseWriter, _ *http.Request) {
-	http.Error(w, "Not Implemented", http.StatusNotImplemented)
+func handleUpdateTask(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		http.Error(w, "Invalid id", http.StatusBadRequest)
+		return
+	}
+
+	var req UpdateTaskRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	task := Task{
+		Title:       req.Title,
+		Description: req.Description,
+		Priority:    req.Priority,
+		Position:    req.Position,
+		DueDate:     req.DueDate,
+		CompletedAt: req.CompletedAt,
+	}
+
+	if err := updateTask(id, task); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
-func handleDeleteTask(w http.ResponseWriter, _ *http.Request) {
-	http.Error(w, "Not Implemented", http.StatusNotImplemented)
+func handleDeleteTask(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		http.Error(w, "Invalid id", http.StatusBadRequest)
+		return
+	}
+
+	if err := deleteTask(id); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func getTasks() ([]Task, error) {
@@ -108,4 +168,64 @@ func getTasks() ([]Task, error) {
 	}
 
 	return tasks, nil
+}
+
+func createTask(task Task) error {
+	_, err := db.Exec(`
+		INSERT INTO tasks(
+			list_id,
+			creator_id,
+			title,
+			description,
+			priority,
+			position,
+			due_date,
+			completed_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`,
+		task.ListID,
+		task.CreatorID,
+		task.Title,
+		task.Description,
+		task.Priority,
+		task.Position,
+		task.DueDate,
+		task.CompletedAt,
+	)
+
+	return err
+}
+
+func updateTask(id int, task Task) error {
+	_, err := db.Exec(`
+		UPDATE tasks
+		SET
+			title = ?,
+			description = ?,
+			priority = ?,
+			position = ?,
+			due_date = ?,
+			completed_at = ?,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?
+		`,
+		task.Title,
+		task.Description,
+		task.Priority,
+		task.Position,
+		task.DueDate,
+		task.CompletedAt,
+		id,
+	)
+
+	return err
+}
+
+func deleteTask(id int) error {
+	_, err := db.Exec(`
+						DELETE FROM tasks
+						WHERE id = ?`,
+		id,
+	)
+	return err
 }
