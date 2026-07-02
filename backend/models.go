@@ -105,6 +105,17 @@ type Label struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
+type CreateLabelRequest struct {
+	ProjectID int    `json:"project_id"`
+	Name      string `json:"name"`
+	Color     string `json:"color"`
+}
+
+type UpdateLabelRequest struct {
+	Name  string `json:"name"`
+	Color string `json:"color"`
+}
+
 type Comment struct {
 	ID        int    `json:"id"`
 	TaskID    int    `json:"task_id"`

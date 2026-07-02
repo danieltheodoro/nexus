@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 )
 
 func labels(w http.ResponseWriter, r *http.Request) {
@@ -36,6 +37,70 @@ func handleGetLabels(w http.ResponseWriter, _ *http.Request) {
 	if err := json.NewEncoder(w).Encode(labels); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func handleCreateLabel(w http.ResponseWriter, r *http.Request) {
+	var req CreateLabelRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	label := Label{
+		ProjectID: req.ProjectID,
+		Name:      req.Name,
+		Color:     req.Color,
+	}
+
+	if err := createLabel(label); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+}
+
+func handleUpdateLabel(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		http.Error(w, "Invalid id", http.StatusBadRequest)
+		return
+	}
+
+	var req UpdateLabelRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	label := Label{
+		Name:  req.Name,
+		Color: req.Color,
+	}
+
+	if err := updateLabel(id, label); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func handleDeleteLabel(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		http.Error(w, "Invalid id", http.StatusBadRequest)
+		return
+	}
+
+	if err := deleteLabel(id); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func getLabels() ([]Label, error) {
@@ -80,14 +145,45 @@ func getLabels() ([]Label, error) {
 	return labels, nil
 }
 
-func handleCreateLabel(w http.ResponseWriter, _ *http.Request) {
-	http.Error(w, "Not Implemented", http.StatusNotImplemented)
+func createLabel(label Label) error {
+	_, err := db.Exec(`
+		INSERT INTO labels(
+			project_id,
+			name,
+			color
+		) VALUES (?, ?, ?)
+	`,
+		label.ProjectID,
+		label.Name,
+		label.Color,
+	)
+
+	return err
+
 }
 
-func handleUpdateLabel(w http.ResponseWriter, _ *http.Request) {
-	http.Error(w, "Not Implemented", http.StatusNotImplemented)
+func updateLabel(id int, label Label) error {
+	_, err := db.Exec(`
+		UPDATE labels
+		SET
+			name = ?,
+			color = ?,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?
+		`,
+		label.Name,
+		label.Color,
+		id,
+	)
+
+	return err
 }
 
-func handleDeleteLabel(w http.ResponseWriter, _ *http.Request) {
-	http.Error(w, "Not Implemented", http.StatusNotImplemented)
+func deleteLabel(id int) error {
+	_, err := db.Exec(`
+						DELETE FROM labels
+						WHERE id = ?`,
+		id,
+	)
+	return err
 }
