@@ -49,7 +49,6 @@ type Project struct {
 }
 
 type CreateProjectRequest struct {
-	UserID      int    `json:"user_id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Color       string `json:"color"`
@@ -156,7 +155,7 @@ type UpdateCommentRequest struct {
 }
 
 type LoginRequest struct {
-	Username  string `json:"username"`
+	Username string `json:"username"`
 	Password string `json:"password"`
 }
 

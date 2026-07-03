@@ -2,8 +2,11 @@ package main
 
 import (
 	"database/sql"
+	"errors"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"os"
+	"time"
 )
 
 func nullString(s sql.NullString) string {
@@ -42,4 +45,46 @@ func getJWTSecret() []byte {
 	}
 
 	return []byte(secret)
+}
+
+func generateJWT(user User) (string, error) {
+	claims := jwt.MapClaims{
+		"user_id":  user.ID,
+		"username": user.Username,
+		"exp":      time.Now().Add(24 * time.Hour).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return token.SignedString(getJWTSecret())
+}
+
+type Claims struct {
+	UserID   int    `json:"user_id"`
+	Username string `json:"username"`
+	jwt.RegisteredClaims
+}
+
+func validateJWT(tokenString string) (*Claims, error) {
+	claims := &Claims{}
+
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		claims,
+		func(token *jwt.Token) (any, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, errors.New("Unexpected signing method")
+			}
+			return getJWTSecret(), nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if !token.Valid {
+		return nil, errors.New("Invalid token")
+	}
+
+	return claims, nil
 }

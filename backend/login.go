@@ -2,9 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/golang-jwt/jwt/v5"
 	"net/http"
-	"time"
 )
 
 func login(w http.ResponseWriter, r *http.Request) {
@@ -43,18 +41,4 @@ func login(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-}
-
-var jwtSecret = getJWTSecret()
-
-func generateJWT(user User) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id":  user.ID,
-		"username": user.Username,
-		"exp":      time.Now().Add(24 * time.Hour).Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	return token.SignedString(jwtSecret)
 }
