@@ -7,43 +7,75 @@ import (
 )
 
 func labels(w http.ResponseWriter, r *http.Request) {
+	userID, err := authenticate(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
-		handleGetLabels(w, r)
+		handleGetLabels(w, r, userID)
 
 	case http.MethodPost:
-		handleCreateLabel(w, r)
+		handleCreateLabel(w, r, userID)
 
 	case http.MethodPatch:
-		handleUpdateLabel(w, r)
+		handleUpdateLabel(w, r, userID)
 
 	case http.MethodDelete:
-		handleDeleteLabel(w, r)
+		handleDeleteLabel(w, r, userID)
 
 	default:
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 	}
 }
 
-func handleGetLabels(w http.ResponseWriter, _ *http.Request) {
-	labels, err := getLabels()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+func handleGetLabels(w http.ResponseWriter, r *http.Request, userID int) {
+	idParam := r.URL.Query().Get("id")
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(labels); err != nil {
+	if idParam == "" {
+		labels, err := getLabels(userID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if err := json.NewEncoder(w).Encode(labels); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		http.Error(w, "Invalid id", http.StatusBadRequest)
+		return
+	}
+
+	label, err := getLabel(id, userID)
+	if err != nil {
+		http.Error(w, "Label not found", http.StatusNotFound)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(label); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
-func handleCreateLabel(w http.ResponseWriter, r *http.Request) {
+func handleCreateLabel(w http.ResponseWriter, r *http.Request, userID int) {
 	var req CreateLabelRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if !projectBelongsToUser(req.ProjectID, userID) {
+		http.Error(w, "Project not found", http.StatusNotFound)
 		return
 	}
 
@@ -61,7 +93,7 @@ func handleCreateLabel(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func handleUpdateLabel(w http.ResponseWriter, r *http.Request) {
+func handleUpdateLabel(w http.ResponseWriter, r *http.Request, userID int) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
 		http.Error(w, "Invalid id", http.StatusBadRequest)
@@ -80,7 +112,7 @@ func handleUpdateLabel(w http.ResponseWriter, r *http.Request) {
 		Color: req.Color,
 	}
 
-	if err := updateLabel(id, label); err != nil {
+	if err := updateLabel(id, userID, label); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -88,14 +120,14 @@ func handleUpdateLabel(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func handleDeleteLabel(w http.ResponseWriter, r *http.Request) {
+func handleDeleteLabel(w http.ResponseWriter, r *http.Request, userID int) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
 		http.Error(w, "Invalid id", http.StatusBadRequest)
 		return
 	}
 
-	if err := deleteLabel(id); err != nil {
+	if err := deleteLabel(id, userID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -103,19 +135,22 @@ func handleDeleteLabel(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func getLabels() ([]Label, error) {
+func getLabels(userID int) ([]Label, error) {
 	labels := []Label{}
 
 	rows, err := db.Query(`
 		SELECT
-			id,
-			project_id,
-			name,
-			color,
-			created_at,
-			updated_at
-		FROM labels
-	`)
+			l.id,
+			l.project_id,
+			l.name,
+			l.color,
+			l.created_at,
+			l.updated_at
+		FROM labels l
+		JOIN projects p
+			ON l.project_id = p.id
+		WHERE p.user_id = ?
+	`, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -145,6 +180,37 @@ func getLabels() ([]Label, error) {
 	return labels, nil
 }
 
+func getLabel(id int, userID int) (Label, error) {
+	var label Label
+
+	err := db.QueryRow(`
+		SELECT
+			l.id,
+			l.project_id,
+			l.name,
+			l.color,
+			l.created_at,
+			l.updated_at
+		FROM labels l
+		JOIN projects p
+			ON l.project_id = p.id
+		WHERE l.id = ?
+		AND p.user_id = ?
+	`, id, userID).Scan(
+		&label.ID,
+		&label.ProjectID,
+		&label.Name,
+		&label.Color,
+		&label.CreatedAt,
+		&label.UpdatedAt,
+	)
+	if err != nil {
+		return Label{}, err
+	}
+
+	return label, nil
+}
+
 func createLabel(label Label) error {
 	_, err := db.Exec(`
 		INSERT INTO labels(
@@ -159,10 +225,9 @@ func createLabel(label Label) error {
 	)
 
 	return err
-
 }
 
-func updateLabel(id int, label Label) error {
+func updateLabel(id int, userID int, label Label) error {
 	_, err := db.Exec(`
 		UPDATE labels
 		SET
@@ -170,20 +235,34 @@ func updateLabel(id int, label Label) error {
 			color = ?,
 			updated_at = CURRENT_TIMESTAMP
 		WHERE id = ?
-		`,
+		AND project_id IN (
+			SELECT id
+			FROM projects
+			WHERE user_id = ?
+		)
+	`,
 		label.Name,
 		label.Color,
 		id,
+		userID,
 	)
 
 	return err
 }
 
-func deleteLabel(id int) error {
+func deleteLabel(id int, userID int) error {
 	_, err := db.Exec(`
-						DELETE FROM labels
-						WHERE id = ?`,
+		DELETE FROM labels
+		WHERE id = ?
+		AND project_id IN (
+			SELECT id
+			FROM projects
+			WHERE user_id = ?
+		)
+	`,
 		id,
+		userID,
 	)
+
 	return err
 }
