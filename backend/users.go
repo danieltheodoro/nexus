@@ -4,31 +4,40 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"strconv"
 )
 
 func users(w http.ResponseWriter, r *http.Request) {
+
 	switch r.Method {
-	case http.MethodGet:
-		handleGetUsers(w, r)
 
 	case http.MethodPost:
 		handleCreateUser(w, r)
+		return
+	}
+
+	userID, err := authenticate(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		handleGetUsers(w, r, userID)
 
 	case http.MethodPatch:
-		handleUpdateUser(w, r)
+		handleUpdateUser(w, r, userID)
 
 	case http.MethodDelete:
-		handleDeleteUser(w, r)
+		handleDeleteUser(w, r, userID)
 
 	default:
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-
+		http.Error(w, "Method NotAllowed", http.StatusMethodNotAllowed)
 	}
 }
 
-func handleGetUsers(w http.ResponseWriter, _ *http.Request) {
-	users, err := getUsers()
+func handleGetUsers(w http.ResponseWriter, r *http.Request, userID int) {
+	user, err := getUser(userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -36,13 +45,14 @@ func handleGetUsers(w http.ResponseWriter, _ *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(users); err != nil {
+	if err := json.NewEncoder(w).Encode(user); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func handleCreateUser(w http.ResponseWriter, r *http.Request) {
 	var req CreateUserRequest
+	var userID int64
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -64,20 +74,24 @@ func handleCreateUser(w http.ResponseWriter, r *http.Request) {
 		AvatarURL:    req.AvatarURL,
 	}
 
-	if err := createUser(user); err != nil {
+	userID, err = createUser(user)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(map[string]any{
+		"id": userID,
+	}); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
 }
 
-func handleUpdateUser(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
-	if err != nil {
-		http.Error(w, "Invalid id", http.StatusBadRequest)
-		return
-	}
+func handleUpdateUser(w http.ResponseWriter, r *http.Request, userID int) {
+	id := userID
 
 	var req UpdateUserRequest
 
@@ -87,6 +101,7 @@ func handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var currentHash string
+	var err error
 
 	err = db.QueryRow(
 		`SELECT password_hash FROM users WHERE id = ?`,
@@ -131,12 +146,8 @@ func handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func handleDeleteUser(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
-	if err != nil {
-		http.Error(w, "Invalid id", http.StatusBadRequest)
-		return
-	}
+func handleDeleteUser(w http.ResponseWriter, r *http.Request, userID int) {
+	var err error
 
 	var req DeleteUserRequest
 
@@ -149,7 +160,7 @@ func handleDeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	err = db.QueryRow(
 		`SELECT password_hash FROM users WHERE id = ?`,
-		id,
+		userID,
 	).Scan(&currentHash)
 	if err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
@@ -161,7 +172,7 @@ func handleDeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := deleteUser(id); err != nil {
+	if err := deleteUser(userID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -224,6 +235,47 @@ func getUsers() ([]User, error) {
 	return users, nil
 }
 
+func getUser(userID int) (User, error) {
+	var user User
+	var firstName sql.NullString
+	var lastName sql.NullString
+	var avatarURL sql.NullString
+
+	err := db.QueryRow(`
+		SELECT
+			id,
+			username,
+			email,
+			first_name,
+			last_name,
+			avatar_url,
+			is_active,
+			created_at,
+			updated_at
+		FROM users
+		WHERE id = ?
+	`, userID).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&firstName,
+		&lastName,
+		&avatarURL,
+		&user.IsActive,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		return User{}, err
+	}
+
+	user.FirstName = nullString(firstName)
+	user.LastName = nullString(lastName)
+	user.AvatarURL = nullString(avatarURL)
+
+	return user, nil
+}
+
 func getUserByUsername(username string) (User, error) {
 	var user User
 
@@ -246,8 +298,8 @@ func getUserByUsername(username string) (User, error) {
 	return user, err
 }
 
-func createUser(user User) error {
-	_, err := db.Exec(`
+func createUser(user User) (int64, error) {
+	result, err := db.Exec(`
 		INSERT INTO users (
 			username,
 			email,
@@ -256,7 +308,7 @@ func createUser(user User) error {
 			last_name,
 			avatar_url
 		) VALUES (?, ?, ?, ?, ?, ?)
-		`,
+	`,
 		user.Username,
 		user.Email,
 		user.PasswordHash,
@@ -264,8 +316,16 @@ func createUser(user User) error {
 		user.LastName,
 		user.AvatarURL,
 	)
+	if err != nil {
+		return 0, err
+	}
 
-	return err
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
 
 func updateUser(id int, user User) error {
