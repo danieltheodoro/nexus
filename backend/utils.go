@@ -88,3 +88,18 @@ func validateJWT(tokenString string) (*Claims, error) {
 
 	return claims, nil
 }
+
+func projectBelongsToUser(projectID int, userID int) bool {
+	var exists bool
+
+	err := db.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1
+			FROM projects
+			WHERE id = ?
+			AND user_id = ?
+		)
+	`, projectID, userID).Scan(&exists)
+
+	return err == nil && exists
+}
