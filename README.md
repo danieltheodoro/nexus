@@ -30,10 +30,15 @@ users
 
 ## Roadmap
 
-- [x] Database schema
-- [x] Seed data
-- [x] HTTP server
-- [x] Database initialization
-- [x] CRUD API
-- [ ] Authentication
+- [x] SQLite schema
+- [x] JWT Authentication
+- [x] User management
+- [x] Projects
+- [x] Lists
+- [x] Tasks
+- [x] Comments
+- [x] Labels
+- [x] Task ↔ Label associations
 - [ ] Frontend
+- [ ] Docker
+- [ ] Automated tests

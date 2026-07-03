@@ -138,3 +138,20 @@ func taskBelongsToUser(taskID int, userID int) bool {
 
 	return err == nil && exists
 }
+
+func labelBelongsToUser(labelID int, userID int) bool {
+	var exists bool
+
+	err := db.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1
+			FROM labels l
+			JOIN projects p
+				ON l.project_id = p.id
+			WHERE l.id = ?
+			AND p.user_id = ?
+		)
+	`, labelID, userID).Scan(&exists)
+
+	return err == nil && exists
+}

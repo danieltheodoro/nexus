@@ -23,6 +23,7 @@ func main() {
 	http.HandleFunc("/tasks", tasks)
 	http.HandleFunc("/labels", labels)
 	http.HandleFunc("/comments", comments)
+	http.HandleFunc("/task-labels", taskLabels)
 
 	fmt.Println("Listening on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {

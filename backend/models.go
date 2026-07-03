@@ -135,6 +135,16 @@ type UpdateLabelRequest struct {
 	Color string `json:"color"`
 }
 
+type TaskLabel struct {
+	TaskID  int `json:"task_id"`
+	LabelID int `json:"label_id"`
+}
+
+type CreateTaskLabelRequest struct {
+	TaskID  int `json:"task_id"`
+	LabelID int `json:"label_id"`
+}
+
 type Comment struct {
 	ID        int    `json:"id"`
 	TaskID    int    `json:"task_id"`
