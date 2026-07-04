@@ -1,34 +1,28 @@
 # Nexus
 
-Task manager in development.
+> Management made easy.
+
+Nexus is a modern management platform built to simplify everyday operations for teams and organizations.
 
 ## Status
 
-Database and backend in development
-
-## Database Model
-
-```text
-users
-│
-├── projects
-│   ├── lists
-│   │   └── tasks
-│   │        ├── comments
-│   │        │
-│   │        └── task_labels
-│   │             ▲
-│   └── labels ───┘
-│
-└──────────────► comments
-```
+Active development
 
 ## Tech Stack
 
-- SQLite
-- Go
+### Frontend
 
-## Roadmap
+- React Native
+- Expo
+- TypeScript
+
+### Backend
+
+- Go
+- SQLite
+- JWT Authentication
+
+## Current Features
 
 - [x] SQLite schema
 - [x] JWT Authentication
@@ -39,6 +33,54 @@ users
 - [x] Comments
 - [x] Labels
 - [x] Task ↔ Label associations
-- [ ] Frontend
-- [ ] Docker
-- [ ] Automated tests
+- [x] Authentication UI
+
+## Roadmap
+
+- [ ] Dashboard
+- [ ] Employee Management
+- [ ] Customer Management
+- [ ] Inventory Management
+- [ ] Reports
+- [ ] Settings
+
+## Database Model
+
+```text
+users
+│
+├── projects
+│   ├── lists
+│   │   └── tasks
+│   │        ├── comments
+│   │        └── task_labels
+│   │             ▲
+│   └── labels ───┘
+│
+└──────────────► comments
+```
+
+## Getting Started
+
+### Clone the repository
+
+```bash
+git clone https://github.com/danieltheodoro/nexus.git
+```
+
+### Install dependencies
+
+```bash
+cd nexus/frontend
+npm install
+```
+
+### Start the development server
+
+```bash
+npx expo start
+```
+
+## License
+
+This project is licensed under the MIT License.
